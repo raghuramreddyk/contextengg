@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>contextengg — Agentic Context Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Tokens ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1c2333;
+      --surface3:  #21273a;
+      --border:    #30363d;
+      --border2:   #3d444d;
+      --text:      #e6edf3;
+      --text-muted:#8b949e;
+      --text-dim:  #484f58;
+      --blue:      #388bfd;
+      --blue-dim:  #1f3a5f;
+      --green:     #3fb950;
+      --green-dim: #1a4028;
+      --yellow:    #d29922;
+      --yellow-dim:#3a2d0a;
+      --red:       #f85149;
+      --red-dim:   #3d1416;
+      --purple:    #a371f7;
+      --purple-dim:#2d1f5e;
+      --pink:      #f778ba;
+      --cyan:      #56d364;
+      --radius:    10px;
+      --radius-lg: 16px;
+      --shadow:    0 8px 32px rgba(0,0,0,.4);
+    }
+
+    html { font-size: 14px; scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    .app { display: flex; flex-direction: column; min-height: 100vh; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -.02em;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .logo span { color: var(--blue); }
+
+    nav { display: flex; gap: .25rem; margin-left: auto; }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: .4rem .9rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .875rem;
+      font-family: inherit;
+      font-weight: 500;
+      transition: all .15s;
+    }
+    .nav-btn:hover { background: var(--surface2); color: var(--text); }
+    .nav-btn.active { background: var(--blue-dim); color: var(--blue); }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      transition: background .3s;
+      flex-shrink: 0;
+    }
+    .status-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-dot.err { background: var(--red); }
+
+    .api-label {
+      font-size: .75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+      gap: 1.5rem;
+    }
+
+    /* ── Tab panels ─────────────────────────────────────────────────────── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: contents; }
+
+    /* ── Cards ──────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: .9rem;
+      color: var(--text);
+    }
+
+    .card-subtitle {
+      font-size: .75rem;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    .card-body { padding: 1.25rem; }
+
+    /* ── Forms ──────────────────────────────────────────────────────────── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: .4rem;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: inherit;
+      font-size: .875rem;
+      padding: .6rem .85rem;
+      outline: none;
+      transition: border-color .15s, background .15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue);
+      background: var(--surface3);
+    }
+    input::placeholder, textarea::placeholder { color: var(--text-dim); }
+    textarea { resize: vertical; min-height: 100px; font-family: 'Inter', sans-serif; }
+    select option { background: var(--surface2); }
+
+    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .55rem 1.1rem;
+      border: none;
+      border-radius: var(--radius);
+      font-size: .875rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #58a6ff; }
+
+    .btn-success { background: var(--green); color: #000; }
+    .btn-success:hover:not(:disabled) { background: #56d364; }
+
+    .btn-danger  { background: var(--red); color: #fff; }
+    .btn-danger:hover:not(:disabled)  { background: #ff6b6b; }
+
+    .btn-warning { background: var(--yellow); color: #000; }
+    .btn-warning:hover:not(:disabled) { background: #e3b341; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
+
+    .btn-sm { padding: .35rem .75rem; font-size: .8rem; }
+
+    /* ── Badges ──────────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      padding: .2rem .6rem;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+    }
+    .badge-high    { background: var(--green-dim); color: var(--green); border: 1px solid #2ea04380; }
+    .badge-medium  { background: var(--yellow-dim); color: var(--yellow); border: 1px solid #9e6a0380; }
+    .badge-low     { background: var(--red-dim); color: var(--red); border: 1px solid #f8514980; }
+    .badge-blue    { background: var(--blue-dim); color: var(--blue); border: 1px solid #388bfd40; }
+    .badge-purple  { background: var(--purple-dim); color: var(--purple); border: 1px solid #a371f740; }
+
+    /* ── Run output ──────────────────────────────────────────────────────── */
+    .run-output {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8rem;
+      color: var(--text-muted);
+      min-height: 60px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+    }
+
+    /* ── Metrics Grid ────────────────────────────────────────────────────── */
+    .metrics-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    .metric-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+    }
+
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .metric-label {
+      font-size: .75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .metric-sub {
+      font-size: .8rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Topic grid ─────────────────────────────────────────────────────── */
+    .topic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+
+    .topic-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      transition: border-color .15s, transform .15s;
+    }
+    .topic-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+
+    .topic-card-header { display: flex; align-items: center; justify-content: space-between; }
+
+    .topic-name {
+      font-weight: 600;
+      font-size: .9rem;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .version-history {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      flex-wrap: wrap;
+    }
+
+    .ver-chip {
+      font-size: .7rem;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .15rem .45rem;
+      color: var(--text-muted);
+    }
+    .ver-chip.latest {
+      background: var(--blue-dim);
+      border-color: #388bfd40;
+      color: var(--blue);
+      font-weight: 600;
+    }
+
+    .progress-bar-wrap {
+      background: var(--surface3);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+      transition: width .6s cubic-bezier(.4,0,.2,1);
+    }
+
+    .topic-meta {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+    }
+
+    .task-item {
+      font-size: .75rem;
+      color: var(--text-muted);
+      padding: .25rem .5rem;
+      background: var(--surface3);
+      border-radius: 4px;
+      line-height: 1.4;
+    }
+    .task-item::before { content: '→ '; color: var(--blue); font-weight: 700; }
+
+    /* ── HITL queue ─────────────────────────────────────────────────────── */
+    .queue-empty {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-dim);
+      font-size: .9rem;
+    }
+
+    .queue-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    .queue-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .queue-item-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      transition: background .1s;
+    }
+    .queue-item-header:hover { background: var(--surface3); }
+
+    .queue-query {
+      font-weight: 500;
+      font-size: .875rem;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .queue-meta { font-size: .75rem; color: var(--text-muted); display: flex; gap: .75rem; align-items: center; }
+
+    .queue-item-body { padding: 1rem; display: none; flex-direction: column; gap: 1rem; }
+    .queue-item-body.open { display: flex; }
+
+    .response-box {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .85rem;
+      font-size: .83rem;
+      line-height: 1.65;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .critic-box {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .score-ring {
+      flex-shrink: 0;
+      width: 72px;
+      height: 72px;
+      position: relative;
+    }
+
+    .score-ring svg { width: 72px; height: 72px; transform: rotate(-90deg); }
+    .score-ring circle {
+      cx: 36; cy: 36; r: 30;
+      fill: none;
+      stroke-width: 5;
+    }
+    .score-ring .track { stroke: var(--surface3); }
+    .score-ring .fill { stroke: var(--green); stroke-linecap: round; transition: stroke-dashoffset .6s; }
+
+    .score-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: .9rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .score-label small { font-size: .6rem; font-weight: 500; color: var(--text-muted); }
+
+    .critic-reasoning {
+      flex: 1;
+      font-size: .8rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .decision-row {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .edit-area { flex: 1; min-width: 200px; }
+
+    .reviewer-row {
+      display: flex;
+      gap: .75rem;
+      align-items: center;
+    }
+
+    /* ── Toast ───────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: .75rem 1.25rem;
+      font-size: .875rem;
+      box-shadow: var(--shadow);
+      transform: translateY(120%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      z-index: 999;
+      max-width: 380px;
+    }
+    #toast.show { transform: translateY(0); }
+    #toast.success { border-color: var(--green); color: var(--green); }
+    #toast.error   { border-color: var(--red);   color: var(--red);   }
+
+    /* ── Spinner ─────────────────────────────────────────────────────────── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Divider / misc ──────────────────────────────────────────────────── */
+    hr { border: none; border-top: 1px solid var(--border); }
+
+    .icon { font-style: normal; }
+
+    .flex { display: flex; }
+    .gap-2 { gap: .5rem; }
+    .gap-3 { gap: .75rem; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .mb-3 { margin-bottom: .75rem; }
+    .mt-2 { margin-top: .5rem; }
+
+    .text-sm { font-size: .8rem; }
+    .text-muted { color: var(--text-muted); }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .section-head {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: .75rem;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .metrics-summary { grid-template-columns: 1fr 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .topic-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ────────────────────── HEADER ───────────────────────── -->
+  <header>
+    <div class="logo">
+      <span>⬡</span> contextengg
+    </div>
+    <div class="flex items-center gap-2" style="margin-left:.5rem">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="api-label" id="apiLabel">connecting…</span>
+    </div>
+    <nav>
+      <button class="nav-btn active" id="tab-run" onclick="switchTab('run')">Run Query</button>
+      <button class="nav-btn" id="tab-hitl" onclick="switchTab('hitl')">
+        HITL Queue <span id="pendingBadge" style="display:none;background:var(--red);color:#fff;border-radius:10px;padding:.05rem .4rem;font-size:.7rem;margin-left:.3rem">0</span>
+      </button>
+      <button class="nav-btn" id="tab-metrics" onclick="switchTab('metrics')">Context Metrics</button>
+    </nav>
+  </header>
+
+  <!-- ────────────────────── MAIN ────────────────────────── -->
+  <main>
+
+    <!-- ════════════════ TAB: RUN ════════════════ -->
+    <div class="tab-panel active" id="panel-run">
+
+      <!-- Run form -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">▶</span>
+          <span class="card-title">Run Actor-Critic Workflow</span>
+          <span class="card-subtitle">Async HITL mode — decision appears in HITL Queue</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-full">
+              <label>Query</label>
+              <textarea id="runQuery" rows="3" placeholder="e.g. Should I use FOB or FCA for a containerised shipment from Shanghai to Hamburg?"></textarea>
+            </div>
+            <div>
+              <label>Domain</label>
+              <input id="runDomain" value="global_trade" />
+            </div>
+            <div>
+              <label>Topic Label</label>
+              <select id="runTopic">
+                <option value="incoterms">incoterms</option>
+                <option value="trade_finance">trade_finance</option>
+                <option value="hs_codes">hs_codes</option>
+                <option value="trade_agreements">trade_agreements</option>
+                <option value="logistics">logistics</option>
+                <option value="sanctions">sanctions</option>
+                <option value="documentation">documentation</option>
+                <option value="risk_management">risk_management</option>
+              </select>
+            </div>
+            <div>
+              <label>Reviewer ID</label>
+              <input id="runReviewer" value="ui_user" />
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:.75rem">
+              <button class="btn btn-primary" id="btnRun" onclick="runWorkflow()">
+                <span class="icon">▶</span> Submit Query
+              </button>
+              <button class="btn btn-ghost" onclick="fillExample()">Load Example</button>
+            </div>
+          </div>
+
+          <div style="margin-top:1.25rem">
+            <div class="section-head">Output</div>
+            <div class="run-output" id="runOutput">Waiting for submission…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Example queries quick-fire -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">⚡</span>
+          <span class="card-title">Quick Examples</span>
+          <span class="card-subtitle">Click to pre-fill the form above</span>
+        </div>
+        <div class="card-body">
+          <div class="topic-grid" id="exampleGrid"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════════════════ TAB: HITL ════════════════ -->
+    <div class="tab-panel" id="panel-hitl">
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">🔍</span>
+          <span class="card-title">HITL Review Queue</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadHITL()" style="margin-left:auto">
+            <span class="icon">↻</span> Refresh
+          </button>
+        </div>
+        <div class="card-body" id="hitlBody">
+          <div class="queue-empty">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ TAB: METRICS ════════════════ -->
+    <div class="tab-panel" id="panel-metrics">
+
+      <!-- Summary row -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">📊</span>
+          <span class="card-title">Context Store — Summary</span>
+          <div class="flex gap-2 items-center" style="margin-left:auto">
+            <input id="metricsDomain" value="global_trade" style="width:160px;font-size:.8rem;padding:.35rem .7rem" />
+            <button class="btn btn-ghost btn-sm" onclick="loadMetrics()">
+              <span class="icon">↻</span> Refresh
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="metrics-summary" id="metricsSummary">
+            <div class="metric-card">
+              <div class="metric-value" id="mTopics">—</div>
+              <div class="metric-label">Topics Seeded</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="mVersions">—</div>
+              <div class="metric-label">Total Versions</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="mChars">—</div>
+              <div class="metric-label">Knowledge (KB)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="mHitl">—</div>
+              <div class="metric-label">HITL-Approved</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-topic cards -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">📚</span>
+          <span class="card-title">Per-Topic Context Metrics</span>
+        </div>
+        <div class="card-body">
+          <div class="topic-grid" id="topicGrid">
+            <div class="queue-empty">Loading context metrics…</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Toast ── -->
+<div id="toast"></div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const API = 'http://localhost:8000';
+
+const EXAMPLES = [
+  { topic: 'incoterms',       q: 'Should I use FOB or FCA for a containerised shipment from Shanghai to Hamburg?' },
+  { topic: 'trade_finance',   q: 'What documents must a beneficiary present under a CIF Letter of Credit?' },
+  { topic: 'hs_codes',        q: 'What HS chapter covers industrial robots with integrated vision systems?' },
+  { topic: 'trade_agreements',q: 'Does a product assembled in Mexico from US and Chinese inputs qualify under USMCA?' },
+  { topic: 'logistics',       q: 'When does demurrage start accruing and how can it be avoided?' },
+  { topic: 'sanctions',       q: 'What parties must be screened before issuing a Letter of Credit?' },
+  { topic: 'documentation',   q: 'What causes an LC discrepancy on a Bill of Lading?' },
+  { topic: 'risk_management', q: 'How should an exporter hedge FX risk on a net-60 open account sale?' },
+];
+
+const TOPIC_COLORS = {
+  incoterms:        '#388bfd',
+  trade_finance:    '#a371f7',
+  hs_codes:         '#3fb950',
+  trade_agreements: '#e3b341',
+  logistics:        '#56cbf9',
+  sanctions:        '#f85149',
+  documentation:    '#f778ba',
+  risk_management:  '#79c0ff',
+};
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  if (tab === 'hitl') loadHITL();
+  if (tab === 'metrics') loadMetrics();
+}
+
+// ── Health check ─────────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API}/health`);
+    const j = await r.json();
+    if (j.status === 'ok') {
+      document.getElementById('statusDot').className = 'status-dot ok';
+      document.getElementById('apiLabel').textContent = `API v${j.version} · localhost:8000`;
+    }
+  } catch {
+    document.getElementById('statusDot').className = 'status-dot err';
+    document.getElementById('apiLabel').textContent = 'API unreachable';
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 3500);
+}
+
+// ── Run workflow ─────────────────────────────────────────────────────────────
+async function runWorkflow() {
+  const query = document.getElementById('runQuery').value.trim();
+  if (!query) { toast('Please enter a query', 'error'); return; }
+
+  const btn = document.getElementById('btnRun');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Submitting…';
+
+  const out = document.getElementById('runOutput');
+  out.textContent = 'Submitting to Actor-Critic pipeline…';
+
+  try {
+    const res = await fetch(`${API}/workflow/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        domain: document.getElementById('runDomain').value,
+        topic_label: document.getElementById('runTopic').value,
+        reviewer_id: document.getElementById('runReviewer').value || 'ui_user',
+      }),
+    });
+    const j = await res.json();
+    out.textContent = [
+      `Status  : ${j.status}`,
+      `Run ID  : ${j.run_id}`,
+      `Message : ${j.message}`,
+      '',
+      'The Actor-Critic graph is processing your query.',
+      'Switch to the HITL Queue tab to review and approve the response.',
+    ].join('\n');
+    toast('Query submitted — check HITL Queue');
+    document.getElementById('pendingBadge').style.display = 'inline';
+  } catch (e) {
+    out.textContent = `Error: ${e.message}`;
+    toast('Submission failed', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="icon">▶</span> Submit Query';
+  }
+}
+
+// ── Fill example ─────────────────────────────────────────────────────────────
+function fillExample(topic, q) {
+  if (topic) {
+    document.getElementById('runQuery').value = q;
+    document.getElementById('runTopic').value = topic;
+  } else {
+    const ex = EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)];
+    document.getElementById('runQuery').value = ex.q;
+    document.getElementById('runTopic').value = ex.topic;
+  }
+  switchTab('run');
+  document.getElementById('runQuery').focus();
+}
+
+// ── Build example grid ────────────────────────────────────────────────────────
+function buildExampleGrid() {
+  const grid = document.getElementById('exampleGrid');
+  grid.innerHTML = EXAMPLES.map(ex => {
+    const col = TOPIC_COLORS[ex.topic] || '#888';
+    return `
+    <div class="topic-card" style="cursor:pointer;border-left:3px solid ${col}40" onclick="fillExample('${ex.topic}','${ex.q.replace(/'/g,"\\'")}')">
+      <div class="flex items-center gap-2">
+        <span class="badge" style="background:${col}20;color:${col};border:1px solid ${col}40">${ex.topic}</span>
+      </div>
+      <div style="font-size:.82rem;color:var(--text);line-height:1.5">${ex.q}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Score ring ────────────────────────────────────────────────────────────────
+function scoreRing(score, tier) {
+  const pct = Math.round(score * 100);
+  const circ = 2 * Math.PI * 30;
+  const dash = circ * score;
+  const stroke = tier === 'HIGH' ? 'var(--green)' :
+                 tier === 'MEDIUM' ? 'var(--yellow)' : 'var(--red)';
+  return `
+  <div class="score-ring">
+    <svg viewBox="0 0 72 72">
+      <circle class="track" cx="36" cy="36" r="30" />
+      <circle class="fill" cx="36" cy="36" r="30"
+        stroke="${stroke}"
+        stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
+        stroke-dashoffset="0"
+      />
+    </svg>
+    <div class="score-label">${pct}<small>%</small></div>
+  </div>`;
+}
+
+// ── HITL Queue ────────────────────────────────────────────────────────────────
+async function loadHITL() {
+  const body = document.getElementById('hitlBody');
+  body.innerHTML = '<div class="queue-empty"><span class="spinner"></span> Loading…</div>';
+
+  try {
+    const res = await fetch(`${API}/hitl/pending`);
+    const items = await res.json();
+
+    const badge = document.getElementById('pendingBadge');
+    if (items.length === 0) {
+      badge.style.display = 'none';
+      body.innerHTML = '<div class="queue-empty">No pending reviews — run a query first.</div>';
+      return;
+    }
+
+    badge.style.display = 'inline';
+    badge.textContent = items.length;
+
+    body.innerHTML = `<div class="queue-list">${items.map(item => buildQueueItem(item)).join('')}</div>`;
+  } catch (e) {
+    body.innerHTML = `<div class="queue-empty" style="color:var(--red)">Failed to load queue: ${e.message}</div>`;
+  }
+}
+
+function buildQueueItem(item) {
+  const tier = item.confidence_tier || 'LOW';
+  const tierBadge = `<span class="badge badge-${tier.toLowerCase()}">${tier}</span>`;
+  const topicCol = TOPIC_COLORS[item.topic_label] || '#888';
+  return `
+  <div class="queue-item" id="qi-${item.run_id}">
+    <div class="queue-item-header" onclick="toggleQueueItem('${item.run_id}')">
+      ${tierBadge}
+      <span class="badge" style="background:${topicCol}20;color:${topicCol};border:1px solid ${topicCol}40">${item.topic_label}</span>
+      <span class="queue-query">${escHtml(item.query)}</span>
+      <div class="queue-meta">
+        <span class="mono">v${item.context_version_used || '—'}</span>
+        <span class="mono">${(item.critic_score * 100).toFixed(0)}%</span>
+        <span>▾</span>
+      </div>
+    </div>
+    <div class="queue-item-body" id="qb-${item.run_id}">
+
+      <!-- Response -->
+      <div>
+        <div class="section-head">Actor Response</div>
+        <div class="response-box">${escHtml(item.actor_response)}</div>
+      </div>
+
+      <!-- Critic -->
+      <div>
+        <div class="section-head">Critic Evaluation</div>
+        <div class="critic-box">
+          ${scoreRing(item.critic_score, tier)}
+          <div class="critic-reasoning">${escHtml(item.critic_reasoning)}</div>
+        </div>
+      </div>
+
+      <!-- Decision -->
+      <div>
+        <div class="section-head">Decision</div>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <div class="reviewer-row">
+            <label style="margin:0;min-width:80px">Reviewer ID</label>
+            <input id="rev-${item.run_id}" value="ui_reviewer" style="max-width:200px" />
+            <label style="margin:0;min-width:60px">Comment</label>
+            <input id="com-${item.run_id}" placeholder="Optional comment…" />
+          </div>
+          <div class="decision-row">
+            <button class="btn btn-success" onclick="decide('${item.run_id}','approve')">Approve</button>
+            <button class="btn btn-danger" onclick="decide('${item.run_id}','reject')">Reject</button>
+            <div class="edit-area">
+              <textarea id="edit-${item.run_id}" placeholder="Enter corrected response to submit as 'edit'…" rows="3"></textarea>
+              <button class="btn btn-warning btn-sm mt-2" onclick="decide('${item.run_id}','edit')">Submit Edit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+function toggleQueueItem(runId) {
+  const body = document.getElementById(`qb-${runId}`);
+  body.classList.toggle('open');
+}
+
+async function decide(runId, decision) {
+  const reviewer = document.getElementById(`rev-${runId}`)?.value || 'ui_reviewer';
+  const comment  = document.getElementById(`com-${runId}`)?.value || '';
+  const edited   = document.getElementById(`edit-${runId}`)?.value.trim() || null;
+
+  if (decision === 'edit' && !edited) {
+    toast('Please enter the corrected response', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/hitl/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workflow_run_id: runId,
+        decision,
+        edited_response: edited,
+        comment: comment || null,
+        reviewer_id: reviewer,
+      }),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail);
+    toast(`Decision '${decision}' submitted`, 'success');
+    document.getElementById(`qi-${runId}`).remove();
+    await loadMetrics(); // refresh metrics after decision
+  } catch (e) {
+    toast(`Failed: ${e.message}`, 'error');
+  }
+}
+
+// ── Context Metrics ───────────────────────────────────────────────────────────
+async function loadMetrics() {
+  const domain = document.getElementById('metricsDomain').value.trim() || 'global_trade';
+  const grid = document.getElementById('topicGrid');
+  grid.innerHTML = '<div class="queue-empty"><span class="spinner"></span> Loading…</div>';
+
+  try {
+    const res = await fetch(`${API}/workflow/context/metrics/${encodeURIComponent(domain)}`);
+    const data = await res.json();
+    const topics = data.topics || [];
+
+    // Summary
+    const totalVersions = topics.reduce((s, t) => s + t.version_count, 0);
+    const totalChars   = topics.reduce((s, t) => s + t.content_chars, 0);
+    const hitlApproved = topics.filter(t => t.source === 'hitl_approved').length;
+
+    animateCount('mTopics',   topics.length);
+    animateCount('mVersions', totalVersions);
+    animateCount('mChars',    (totalChars / 1024).toFixed(1), false);
+    animateCount('mHitl',     hitlApproved);
+
+    if (topics.length === 0) {
+      grid.innerHTML = '<div class="queue-empty">No context data found for this domain.</div>';
+      return;
+    }
+
+    // Max version count for bar scaling
+    const maxVer = Math.max(...topics.map(t => t.version_count), 1);
+
+    grid.innerHTML = topics.map(topic => buildTopicCard(topic, maxVer)).join('');
+  } catch (e) {
+    grid.innerHTML = `<div class="queue-empty" style="color:var(--red)">Failed: ${e.message}</div>`;
+  }
+}
+
+function buildTopicCard(topic, maxVer) {
+  const col = TOPIC_COLORS[topic.topic_label] || '#888';
+  const pct = Math.round((topic.version_count / maxVer) * 100);
+  const versions = topic.versions || [];
+  const vChips = versions.map((v, i) =>
+    `<span class="ver-chip${i === versions.length - 1 ? ' latest' : ''}">v${v}</span>`
+  ).join('');
+
+  const tasks = (topic.tasks || []).slice(0, 3).map(t =>
+    `<div class="task-item">${escHtml(t)}</div>`
+  ).join('');
+
+  const sourceLabel = topic.source === 'hitl_approved' ? 'HITL Approved' :
+                      topic.source === 'seed' ? 'Seeded' : topic.source;
+
+  return `
+  <div class="topic-card" style="border-top:3px solid ${col}">
+    <div class="topic-card-header">
+      <span class="topic-name">${topic.topic_label}</span>
+      <span class="badge" style="background:${col}20;color:${col};border:1px solid ${col}40">
+        v${topic.latest_version}
+      </span>
+    </div>
+
+    <div class="flex gap-2" style="font-size:.75rem;color:var(--text-muted)">
+      <span>${topic.version_count} version${topic.version_count !== 1 ? 's' : ''}</span>
+      <span>·</span>
+      <span>${(topic.content_chars / 1024).toFixed(1)} KB</span>
+      <span>·</span>
+      <span class="mono">${sourceLabel}</span>
+    </div>
+
+    <div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:${pct}%;background:linear-gradient(90deg,${col},${col}88)"></div>
+      </div>
+    </div>
+
+    <div class="version-history">${vChips}</div>
+
+    ${tasks ? `<div><div class="section-head" style="margin-bottom:.4rem">Tasks (${topic.tasks.length})</div><div class="task-list">${tasks}</div></div>` : ''}
+
+    ${topic.approved_by ? `<div class="text-sm text-muted">Last approved by <strong>${topic.approved_by}</strong></div>` : ''}
+  </div>`;
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function escHtml(str = '') {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function animateCount(id, target, isInt = true) {
+  const el = document.getElementById(id);
+  const end = parseFloat(target);
+  const duration = 600;
+  const start = performance.now();
+  const from = parseFloat(el.textContent) || 0;
+  function step(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    const val = from + (end - from) * ease;
+    el.textContent = isInt ? Math.round(val) : val.toFixed(1);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+checkHealth();
+setInterval(checkHealth, 15000);
+buildExampleGrid();
+loadMetrics();
+
+// Poll for pending HITL every 10s
+setInterval(async () => {
+  try {
+    const r = await fetch(`${API}/hitl/pending`);
+    const items = await r.json();
+    const badge = document.getElementById('pendingBadge');
+    if (items.length > 0) {
+      badge.style.display = 'inline';
+      badge.textContent = items.length;
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch {}
+}, 10000);
+</script>
+</body>
+</html>

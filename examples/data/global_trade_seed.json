@@ -1,0 +1,307 @@
+{
+  "metadata": {
+    "domain": "Global Trade",
+    "version": "1.0.0",
+    "created": "2026-04-11",
+    "description": "Seed context for an Actor-Critic agentic system operating in the global trade domain. Covers trade finance, customs, logistics, compliance, and key regulatory frameworks.",
+    "update_strategy": "append_by_category",
+    "hitl_required": true
+  },
+
+  "structural_role": {
+    "actor_persona": "You are a global trade specialist AI with deep expertise in international trade finance, customs compliance, supply chain logistics, and cross-border regulatory frameworks. You provide accurate, actionable, and regulation-aware responses. Always cite the relevant regulation, Incoterm, or trade agreement when making claims about compliance or legal obligations.",
+    "critic_persona": "You are a senior trade compliance reviewer. Evaluate Actor responses for regulatory accuracy, Incoterm correctness, jurisdiction specificity, and actionability. Flag any response that generalises across jurisdictions without noting regional differences. Propose context updates only when a fact is verifiable and adds durable value.",
+    "domain_scope": [
+      "Trade finance instruments: LC, SBLC, bank guarantees, documentary collections, open account",
+      "Customs and import/export compliance: HS codes, tariff classification, duty calculation",
+      "International commercial terms: Incoterms 2020",
+      "Trade agreements and preferential tariffs: FTAs, GSP, RCEP, USMCA, EU trade deals",
+      "Logistics and freight: FCL, LCL, air freight, multimodal, bonded warehousing",
+      "Sanctions and export controls: OFAC, BIS EAR, EU dual-use regulation",
+      "Trade documentation: bill of lading, certificate of origin, packing list, commercial invoice",
+      "Risk management: country risk, counterparty risk, currency risk, political risk"
+    ]
+  },
+
+  "domain_knowledge": {
+
+    "entities": {
+      "parties": [
+        {
+          "name": "Exporter / Seller",
+          "aliases": ["Shipper", "Beneficiary (in LC context)"],
+          "role": "The party selling and shipping goods across borders. Responsible for export declaration, export licence if applicable, and complying with the Incoterm obligations.",
+          "key_obligations": ["Obtain export licence where required", "Prepare commercial invoice, packing list, certificate of origin", "Comply with sanctions screening on buyer and destination country"]
+        },
+        {
+          "name": "Importer / Buyer",
+          "aliases": ["Consignee", "Applicant (in LC context)"],
+          "role": "The party receiving and paying for goods. Responsible for import customs clearance, duty payment, and import permit where applicable.",
+          "key_obligations": ["File import entry / customs declaration", "Pay applicable duties, VAT/GST, and levies", "Obtain import licence for controlled goods"]
+        },
+        {
+          "name": "Freight Forwarder",
+          "role": "Intermediary that arranges cargo bookings, documentation, and customs brokerage on behalf of exporter or importer.",
+          "key_obligations": ["Issue House Bill of Lading or Air Waybill", "File customs entries (as customs broker)", "Manage cargo insurance if instructed"]
+        },
+        {
+          "name": "Issuing Bank",
+          "role": "In a Letter of Credit transaction, the bank that opens the LC on behalf of the buyer and undertakes to pay the seller upon compliant document presentation.",
+          "governed_by": "UCP 600 (ICC)"
+        },
+        {
+          "name": "Advising / Confirming Bank",
+          "role": "Bank in the seller's country that advises or adds confirmation to the LC, providing additional payment security to the exporter.",
+          "governed_by": "UCP 600 (ICC)"
+        },
+        {
+          "name": "Customs Authority",
+          "examples": ["CBSA (Canada)", "CBP (USA)", "HMRC (UK)", "EU Customs Union member authorities", "DGFT (India)", "GAC (China)"],
+          "role": "Government body responsible for enforcing import/export laws, collecting duties and taxes, and preventing prohibited goods from crossing the border."
+        },
+        {
+          "name": "Carrier",
+          "types": ["Ocean carrier (shipping line)", "Air carrier", "Road carrier", "Rail carrier"],
+          "role": "The party physically transporting goods. Issues the Master Bill of Lading or Master Air Waybill.",
+          "key_document": "Bill of Lading (B/L) — functions as receipt, contract of carriage, and document of title"
+        }
+      ],
+
+      "instruments": [
+        {
+          "name": "Letter of Credit (LC)",
+          "abbreviation": "LC / L/C",
+          "also_known_as": "Documentary Credit",
+          "governed_by": "UCP 600 (ICC Publication)",
+          "types": ["Irrevocable", "Confirmed", "Standby (SBLC)", "Revolving", "Transferable", "Back-to-Back"],
+          "key_principle": "Payment is triggered by compliant document presentation, not delivery of goods. Banks deal in documents, not goods.",
+          "critical_rule": "Any discrepancy in documents (even minor typographical errors) entitles the issuing bank to refuse payment under UCP 600 Article 16."
+        },
+        {
+          "name": "Documentary Collection",
+          "types": ["Documents Against Payment (D/P)", "Documents Against Acceptance (D/A)"],
+          "governed_by": "URC 522 (ICC Publication)",
+          "risk_level": "Lower bank risk than LC — banks do not guarantee payment, only handle document exchange."
+        },
+        {
+          "name": "Bank Guarantee",
+          "types": ["Bid bond", "Performance bond", "Advance payment guarantee", "Retention money guarantee"],
+          "governed_by": "URDG 758 (ICC Publication)"
+        },
+        {
+          "name": "Open Account",
+          "description": "Goods shipped and documents sent directly to buyer. Payment made after delivery on agreed terms (e.g. net 30, net 60).",
+          "risk": "Highest risk for exporter — no bank payment undertaking.",
+          "mitigation": "Trade credit insurance, export factoring, supply chain finance"
+        }
+      ]
+    },
+
+    "incoterms_2020": {
+      "version": "Incoterms 2020 (effective 1 January 2020)",
+      "publisher": "International Chamber of Commerce (ICC)",
+      "critical_note": "Incoterms define risk transfer and cost allocation between buyer and seller. They do NOT determine title transfer or payment terms.",
+      "rules": [
+        {
+          "term": "EXW — Ex Works",
+          "risk_transfer": "At seller's premises",
+          "suitable_for": "Any mode",
+          "seller_obligation": "Minimum — make goods available at named place",
+          "buyer_obligation": "Maximum — bears all costs and risks from seller's door"
+        },
+        {
+          "term": "FCA — Free Carrier",
+          "risk_transfer": "When goods handed to carrier at named place",
+          "suitable_for": "Any mode including containerised sea freight",
+          "note": "2020 update: allows B/L to be issued with 'on board' notation for LC purposes even under FCA"
+        },
+        {
+          "term": "CPT — Carriage Paid To",
+          "risk_transfer": "When goods handed to first carrier",
+          "cost_to_seller": "Freight to named destination",
+          "suitable_for": "Any mode"
+        },
+        {
+          "term": "CIP — Carriage and Insurance Paid To",
+          "risk_transfer": "When goods handed to first carrier",
+          "cost_to_seller": "Freight + insurance (Institute Cargo Clauses A — all risks)",
+          "suitable_for": "Any mode",
+          "note": "2020 update: increased insurance minimum to Clause A for CIP (Clause C remains for CIF)"
+        },
+        {
+          "term": "DAP — Delivered at Place",
+          "risk_transfer": "At named destination, ready for unloading",
+          "cost_to_seller": "All costs to destination except import duties",
+          "suitable_for": "Any mode"
+        },
+        {
+          "term": "DPU — Delivered at Place Unloaded",
+          "risk_transfer": "Once goods unloaded at named destination",
+          "note": "New in 2020, replaces DAT. Only term where seller bears risk during unloading.",
+          "suitable_for": "Any mode"
+        },
+        {
+          "term": "DDP — Delivered Duty Paid",
+          "risk_transfer": "At named destination after import clearance",
+          "cost_to_seller": "Maximum — includes import duties and taxes",
+          "note": "Seller must be able to import in buyer's country. Problematic if seller is not VAT registered there.",
+          "suitable_for": "Any mode"
+        },
+        {
+          "term": "FAS — Free Alongside Ship",
+          "risk_transfer": "When goods placed alongside vessel at port of shipment",
+          "suitable_for": "Bulk / break-bulk sea freight only (NOT containers)"
+        },
+        {
+          "term": "FOB — Free On Board",
+          "risk_transfer": "When goods on board vessel at port of shipment",
+          "suitable_for": "Bulk / break-bulk sea freight only",
+          "common_misuse": "Widely misused for containerised shipments — FCA should be used instead for containers"
+        },
+        {
+          "term": "CFR — Cost and Freight",
+          "risk_transfer": "When goods on board vessel at port of shipment",
+          "cost_to_seller": "Freight to destination port",
+          "suitable_for": "Bulk / break-bulk sea freight only"
+        },
+        {
+          "term": "CIF — Cost, Insurance and Freight",
+          "risk_transfer": "When goods on board vessel at port of shipment",
+          "cost_to_seller": "Freight + insurance minimum (Institute Cargo Clauses C)",
+          "suitable_for": "Bulk / break-bulk sea freight only",
+          "lc_usage": "Most commonly specified in Letters of Credit for commodity trade"
+        }
+      ]
+    },
+
+    "hs_codes": {
+      "description": "Harmonized System (HS) codes are a globally standardised 6-digit numerical taxonomy for classifying traded goods, maintained by the World Customs Organization (WCO). Countries extend to 8–10 digits for national tariff purposes.",
+      "key_facts": [
+        "First 2 digits = Chapter (e.g. Chapter 84 = Machinery)",
+        "First 4 digits = Heading",
+        "First 6 digits = Subheading — internationally harmonised",
+        "7+ digits = National tariff line — varies by country",
+        "Mis-classification is the most common cause of duty underpayment penalties",
+        "Classification is determined by the good's essential character at time of import, not its end use"
+      ],
+      "common_chapters": [
+        { "chapter": "01-05", "description": "Live animals and animal products" },
+        { "chapter": "06-14", "description": "Vegetable products" },
+        { "chapter": "27",    "description": "Mineral fuels, oils, petroleum products" },
+        { "chapter": "72-83", "description": "Base metals and articles thereof" },
+        { "chapter": "84",    "description": "Nuclear reactors, boilers, machinery and mechanical appliances" },
+        { "chapter": "85",    "description": "Electrical machinery, equipment, and electronics" },
+        { "chapter": "87",    "description": "Vehicles (non-railway)" },
+        { "chapter": "90",    "description": "Optical, photographic, medical instruments" }
+      ]
+    },
+
+    "trade_agreements": [
+      {
+        "name": "USMCA",
+        "full_name": "United States-Mexico-Canada Agreement",
+        "replaced": "NAFTA",
+        "effective": "July 1, 2020",
+        "key_benefit": "Preferential (zero or reduced) tariffs between US, Mexico, Canada for qualifying originating goods",
+        "origin_rule": "Rules of Origin must be met — Regional Value Content (RVC) or Tariff Classification Change (TCC) tests",
+        "critical_document": "USMCA Certificate of Origin (self-certified by exporter)"
+      },
+      {
+        "name": "RCEP",
+        "full_name": "Regional Comprehensive Economic Partnership",
+        "members": ["ASEAN-10", "China", "Japan", "South Korea", "Australia", "New Zealand"],
+        "effective": "January 1, 2022",
+        "key_benefit": "Largest free trade area by GDP — progressive tariff reduction over 20 years",
+        "origin_rule": "Regional Value Content >= 40% or Change in Tariff Classification"
+      },
+      {
+        "name": "EU Trade Agreements",
+        "note": "EU negotiates as a single customs union. Key FTAs include EU-South Korea, EU-Japan (EPA), EU-Vietnam, EU-Singapore, EU-Canada (CETA).",
+        "preferential_scheme": "EU Generalised Scheme of Preferences (GSP) — reduced duties for developing country exports"
+      },
+      {
+        "name": "AfCFTA",
+        "full_name": "African Continental Free Trade Area",
+        "launched": "2021",
+        "coverage": "55 African Union member states",
+        "status": "Implementation ongoing — tariff schedules still being negotiated by many members"
+      }
+    ],
+
+    "business_rules": [
+      "Always verify that the HS code used for duty calculation matches the national tariff schedule of the import country — 6-digit HS subheadings are harmonised globally but duty rates are set nationally.",
+      "A Letter of Credit is irrevocable once issued under UCP 600 — the issuing bank cannot cancel it without consent of all parties.",
+      "Sanctions screening must be performed on all parties in a transaction (buyer, seller, carrier, banks, and ultimate consignee) before any trade finance instrument is issued or goods are shipped.",
+      "Certificate of Origin must be issued before or at the time of export — backdated certificates are not accepted by most customs authorities.",
+      "Incoterms 2020 FOB and CIF are only appropriate for non-containerised (bulk/break-bulk) cargo. For FCL/LCL containerised shipments, FCA and CIP are the correct equivalents.",
+      "Transfer of risk under Incoterms is independent of payment terms. Risk can transfer at origin even if payment is on net-60 open account.",
+      "Advance Rulings from customs authorities on HS classification and origin are legally binding on that authority for a defined period — always seek one for high-volume or ambiguous goods.",
+      "Dual-use goods require an export licence even if destined for civilian use if the end-user is flagged or the destination country is under trade restrictions.",
+      "Demurrage (container detention at port) accrues from the first day after free time expires — typically 3–7 days depending on port and carrier contract.",
+      "Under UCP 600, banks have a maximum of 5 banking days to examine documents and determine compliance after presentation."
+    ],
+
+    "terminology_glossary": [
+      { "term": "B/L", "definition": "Bill of Lading — ocean carrier's receipt for goods, contract of carriage, and document of title. Can be negotiable (order B/L) or non-negotiable (straight/sea waybill)." },
+      { "term": "AWB", "definition": "Air Waybill — non-negotiable transport document for air freight. Consignee can collect goods without presenting original AWB." },
+      { "term": "COO", "definition": "Certificate of Origin — document certifying the country of manufacture of goods. Required to claim preferential tariff rates under FTAs." },
+      { "term": "LC",  "definition": "Letter of Credit — bank instrument where issuing bank undertakes to pay exporter upon compliant document presentation." },
+      { "term": "FCL", "definition": "Full Container Load — shipper has exclusive use of a 20ft or 40ft container." },
+      { "term": "LCL", "definition": "Less than Container Load — cargo consolidated with other shippers' goods in a shared container." },
+      { "term": "DDP", "definition": "Delivered Duty Paid — Incoterm where seller bears maximum responsibility including import duties." },
+      { "term": "EAR", "definition": "Export Administration Regulations — US regulations governing export of dual-use items, administered by BIS." },
+      { "term": "OFAC","definition": "Office of Foreign Assets Control — US Treasury agency that administers economic sanctions." },
+      { "term": "GSP", "definition": "Generalised System of Preferences — unilateral tariff preference programs offered by developed countries to developing nations." },
+      { "term": "FTA", "definition": "Free Trade Agreement — bilateral or multilateral agreement reducing tariffs and trade barriers between signatories." },
+      { "term": "MFN", "definition": "Most Favoured Nation — WTO principle requiring a country to offer the same tariff rate to all WTO members unless a preferential agreement exists." },
+      { "term": "RVC", "definition": "Regional Value Content — percentage of a product's value that must originate within the FTA zone to qualify for preferential tariff." },
+      { "term": "TCC", "definition": "Tariff Classification Change — rules of origin test requiring the HS code of the finished product to differ from that of non-originating inputs." },
+      { "term": "ATA Carnet", "definition": "International customs document allowing temporary duty-free import of goods (e.g. trade show samples, professional equipment) into participating countries." },
+      { "term": "Inward Processing Relief", "definition": "Customs procedure allowing importation of goods for processing/manufacturing and re-export with full or partial duty relief." },
+      { "term": "TIR", "definition": "Transport International Routier — customs transit system allowing road cargo to cross multiple countries under a single customs guarantee." }
+    ]
+  },
+
+  "workflow_state": {
+    "goals": [],
+    "progress": [],
+    "decisions_made": [],
+    "open_questions": [],
+    "blockers": []
+  },
+
+  "session_context": {
+    "facts": [],
+    "corrections": [],
+    "contradictions_pending_resolution": [],
+    "cross_cycle_insights": []
+  },
+
+  "user_preferences": {
+    "output_format": "Structured response with: (1) direct answer, (2) applicable regulation or Incoterm cited, (3) jurisdiction-specific caveats where relevant, (4) recommended next action.",
+    "tone": "Professional, precise, jurisdiction-aware. Assume a senior trade finance or supply chain professional audience.",
+    "rejection_patterns": [],
+    "approval_patterns": []
+  },
+
+  "critic_memory": {
+    "score_history": [],
+    "failure_modes_observed": [],
+    "evaluation_rubric": {
+      "relevance":              { "weight": 1.0, "description": "Does the response directly address the task?" },
+      "regulatory_accuracy":   { "weight": 2.0, "description": "Are regulations, Incoterms, and trade rules cited correctly?" },
+      "jurisdiction_specificity": { "weight": 1.5, "description": "Are jurisdiction-specific differences noted where they exist?" },
+      "actionability":         { "weight": 1.5, "description": "Can a trade professional act on this response without further research?" },
+      "completeness":          { "weight": 1.0, "description": "Are all materially relevant aspects of the task addressed?" }
+    },
+    "cross_cycle_insights": []
+  },
+
+  "retrieved_context": {
+    "note": "This section is populated dynamically each cycle and never persisted.",
+    "rag_chunks": [],
+    "tool_outputs": [],
+    "previous_cycle_summaries": [],
+    "external_events": []
+  }
+}

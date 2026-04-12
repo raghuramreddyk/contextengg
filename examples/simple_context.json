@@ -1,0 +1,21 @@
+{
+  "version": "1.3",
+  "business_rules": [
+    "The answer must be concise and direct.",
+    "Do not provide extra unprompted facts or generic conversational fillers (e.g. 'Sure, here is the answer:')."
+  ],
+  "tasks": [
+    {
+      "question": "What are the incoterms rules for sea freight?",
+      "expected_answer": "FAS, FOB, CFR, CIF"
+    },
+    {
+      "question": "What are the rules for air freight?",
+      "expected_answer": "EXW, FCA, CPT, CIP"
+    },
+    {
+      "question": "Who is X?",
+      "expected_answer": "X is a variable"
+    }
+  ]
+}
